@@ -14,7 +14,7 @@ import octoprint.plugin
 class Rewritem600Plugin(octoprint.plugin.AssetPlugin, octoprint.plugin.TemplatePlugin, octoprint.plugin.SettingsPlugin):
 	def rewrite_m600(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
 		if gcode and gcode == "M600":
-			# self._plugin_manager.send_plugin_message(self._identifier, dict(type="popup", msg="Please change the filament and resume the print"))
+			self._plugin_manager.send_plugin_message(self._identifier, dict(type="popup", msg="Please change the filament and resume the print"))
 			comm_instance.setPause(True)
 			cmd = [("M117 Filament Change",),"G91","M83", "G1 Z+"+str(self._settings.get(["zDistance"]))+" E-0.8 F4500", "M82", "G90", "G1 X0 Y0"]
 		return cmd
@@ -23,9 +23,12 @@ class Rewritem600Plugin(octoprint.plugin.AssetPlugin, octoprint.plugin.TemplateP
 		if cmd and cmd == "resume":
 			if(comm_instance.pause_position.x):
 				cmd = []
-				cmd =["M83","G1 E-0.8 F4500", "G1 E0.8 F4500", "G1 E0.8 F4500", "M82", "G90", "G92 E"+str(comm_instance.pause_position.e), "M83", "G1 X"+str(comm_instance.pause_position.x)+" Y"+str(comm_instance.pause_position.y)+" F4500", "G91", "G1 Z-"+str(self._settings.get(["zDistance"])), "G90", "G1 Z"+str(comm_instance.pause_position.z)]
+				cmd =["M83","G1 E-0.8 F4500", "G1 E0.8 F4500", "G1 E0.8 F4500", "M82", "G90", "G92 E"+str(comm_instance.pause_position.e), "M83", "G1 X"+str(comm_instance.pause_position.x)+" Y"+str(comm_instance.pause_position.y)+" Z"+str(comm_instance.pause_position.z)+" F4500"]
 				if(comm_instance.pause_position.f):
 					cmd.append("G1 F" + str(comm_instance.pause_position.f))
+				comm_instance.commands(cmd)
+			else:
+				cmd =["M83","G1 E-0.8 F4500", "G1 E0.8 F4500", "G1 E0.8 F4500", "G91", "G1 Z-"+str(self._settings.get(["zDistance"]))+" F4500", "G90", "M82"]
 				comm_instance.commands(cmd)
 			comm_instance.setPause(False)
 		return
